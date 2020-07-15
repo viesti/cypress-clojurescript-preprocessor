@@ -1,9 +1,12 @@
 {
-    "devDependencies": {
-        "shadow-cljs": "^2.10.14"
-    },
-    "main": "out/dist.js",
-    "dependencies": {
-        "chokidar": "3.4.0"
-    }
+  "name": "cypress-preprocessor-cljs",
+  "version": "0.1.0",
+  "description": "ClojureScript preprocessor for Cypress using shadow-cljs",
+  "devDependencies": {
+    "shadow-cljs": "^2.10.14"
+  },
+  "main": "out/dist.js",
+  "dependencies": {
+    "chokidar": "3.4.0"
+  }
 }

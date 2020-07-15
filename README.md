@@ -2,33 +2,54 @@
 
 ClojureScript preprocessor for Cypress
 
-## Usage (TODO: add npm install)
+## Usage:
 
-1. Install [shadow-cljs](https://shadow-cljs.github.io/docs/UsersGuide.html#_installation), globally for now:
+1. Install [shadow-cljs](https://shadow-cljs.github.io/docs/UsersGuide.html#_installation)
 
    ```sh
-   npm install -g shadow.cljs
+   $ echo {} > package.json
+   $ npm install --save-dev shadow-cljs
    ```
 
-2. Add cypress-preprocessor-cljs to `plugins/index.js`
+2. Install [Cypress](https://docs.cypress.io/guides/getting-started/installing-cypress.html#Installing)
 
-   ```js
+   ```sh
+   $ npm install cypress --save-dev
+   ```
+
+3. WIP: Install cypress-preprocessor-cljs
+
+   ```sh
+   $ git clone git@github.com:viesti/cypress-preprocessor-cljs.git
+   $ cd cypress-preprocessor-cljs
+   $ npm install
+   $ ./node_modules/.bin/shadow-cljs release app
+   $ cd ..
+   $ npm install cypress-preprocessor-cljs --save-dev
+   ```
+
+4. Add cypress-preprocessor-cljs to `cypress/plugins/index.js`
+
+   ```sh
+   $ mkdir -p cypress/plugins
+   $ cat << EOF > cypress/plugins/index.js
    const makeCljsPreprocessor = require('cypress-preprocessor-cljs');
 
    /**
     * @type {Cypress.PluginConfig}
     */
    module.exports = (on, config) => {
-     // `on` is used to hook into various events Cypress emits
-       // `config` is the resolved Cypress config
        on('file:preprocessor', makeCljsPreprocessor(config));
    };
+   EOF
    ```
 
-3. Write test in ClojureScript
+5. Write test in ClojureScript
 
-   ```clojure
-   (ns examples.another)
+   ```sh
+   $ mkdir -p cypress/integration/examples
+   $ cat << EOF > cypress/integration/examples/window.cljs
+   (ns examples.window)
 
    (def cy js/cy)
 
@@ -40,4 +61,11 @@ ClojureScript preprocessor for Cypress
          (js/it "cy.window() - get the global window object"
            (fn []
              (.should (.window cy) "have.property" "top")))))
+   EOF
+   ```
+
+6. Run test
+
+   ```sh
+   $ ./node_modules/.bin/cypress open
    ```

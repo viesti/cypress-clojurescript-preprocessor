@@ -1,0 +1,4 @@
+{:source-paths ["src"]
+ :builds {:app {:target :node-library
+                :output-to "out/dist.js"
+                :exports-var net.tiuhti.cypress-cljs/make-cljs-preprocessor}}}

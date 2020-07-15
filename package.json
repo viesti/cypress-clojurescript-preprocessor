@@ -1,0 +1,9 @@
+{
+    "devDependencies": {
+        "shadow-cljs": "^2.10.14"
+    },
+    "main": "out/dist.js",
+    "dependencies": {
+        "chokidar": "3.4.0"
+    }
+}

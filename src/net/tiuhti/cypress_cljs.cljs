@@ -59,6 +59,8 @@
 (defn read-edn [path]
   (edn/read-string (buffer->str (.readFileSync fs path))))
 
+(def watchers (atom {}))
+
 (defn make-cljs-preprocessor [config]
   (let [integration-folder      (.-integrationFolder config)
         relative-to-integration (fn [path]
@@ -93,7 +95,7 @@
     (when-not (.existsSync fs working-directory)
       (.mkdirSync fs working-directory))
     (write-edn config-path config)
-    (js/console.log "Starting shadow-cljs server")
+    (println "Starting shadow-cljs server")
     (let [opts           #js {:cwd working-directory}
           shadow-process (cp/spawn "shadow-cljs" #js ["server"] opts)
           ready          (atom false)
@@ -101,44 +103,70 @@
                            (let [s (buffer->str data)]
                              (when (.includes s "nREPL server started")
                                (reset! ready true))
-                             (js/console.log (.trimEnd s))))]
-      (add-watch ready :compile (fn [_]
+                             (println (.trimEnd s))))
+          stopping       (atom false)]
+      ;; TODO: Option for compiling all tests at start
+      #_(add-watch ready :compile (fn [_]
                                   (compile (map name (keys builds)))))
       (-> (.-stdout shadow-process)
           (.on "data" output-fn))
       (-> (.-stderr shadow-process)
           (.on "data" output-fn))
       (.on process "SIGINT" (fn [_code]
-                              (js/console.log "Stopping shadow-cljs server")
-                              (let [output (cp/spawnSync "shadow-cljs" #js ["stop"] opts)]
-                                (js/console.log (.trimEnd (buffer->str (.-stdout output))))
-                                (js/console.log (.trimEnd (buffer->str (.-stderr output)))))))
+                              (when @stopping
+                                (println "Stop in progress"))
+                              (when-not @stopping
+                                (reset! stopping true)
+                                (println (str (.-pid process) ": Stopping shadow-cljs server"))
+                                (let [output (cp/spawnSync "shadow-cljs" #js ["stop"] opts)]
+                                  (println "stdout:" (.trimEnd (buffer->str (.-stdout output))))
+                                  (println "stderr:" (.trimEnd (buffer->str (.-stderr output))))))))
       (fn preprocessor [file]
-        (if (-> file .-filePath (.endsWith ".cljs"))
-          (let [test-name     (-> file
-                                  .-filePath
-                                  (.split "/")
-                                  last
-                                  (.split ".")
-                                  first)
-                compiled-file (str/join [(path/resolve working-directory (str "out-" test-name))
-                                         "/"
-                                         test-name
-                                         ".js"])
-                build-id      (keyword test-name)
-                test-file     (relative-to-integration (.-filePath file))
-                config        (read-edn config-path)]
-            (when-not (contains? (:builds config) build-id)
-              (let [output-dir (str "out-" test-name)
-                    config     (update config :builds conj [build-id {:target           :browser
-                                                                      :compiler-options {:optimizations :simple}
-                                                                      :output-dir       output-dir
-                                                                      :asset-path       (str "/" output-dir)
-                                                                      :modules          {build-id {:entries [(namespace-symbol test-file)]}}}])]
-                (.writeFileSync fs config-path (with-out-str (pprint config)))))
-            (js/Promise. (fn [resolve _reject]
-                           (-> (compile [(name build-id)])
-                               (.on "exit" (fn [_]
-                                             (println "Compile done!")
-                                             (resolve compiled-file)))))))
-          (.-filePath file))))))
+        (let [filePath (.-filePath file)]
+          (if-not (.endsWith filePath ".cljs")
+            filePath
+            (let [test-name     (-> filePath
+                                    (.split "/")
+                                    last
+                                    (.split ".")
+                                    first)
+                  compiled-file (str/join [(path/resolve working-directory (str "out-" test-name))
+                                           "/"
+                                           test-name
+                                           ".js"])
+                  build-id      (keyword test-name)
+                  test-file     (relative-to-integration filePath)
+                  config        (read-edn config-path)]
+              (when-not (contains? (:builds config) build-id)
+                (println "Updating shadow-cljs.edn")
+                (let [output-dir (str "out-" test-name)
+                      config     (update config :builds conj [build-id {:target           :browser
+                                                                        :compiler-options {:optimizations :simple}
+                                                                        :output-dir       output-dir
+                                                                        :asset-path       (str "/" output-dir)
+                                                                        :modules          {build-id {:entries [(namespace-symbol test-file)]}}}])]
+                  (.writeFileSync fs config-path (with-out-str (pprint config)))))
+              (when (and (.-shouldWatch file)
+                         (not (contains? @watchers filePath)))
+                (println "Add watcher for" filePath)
+                (swap! watchers assoc filePath {:watcher (let [watcher (chokidar/watch filePath)]
+                                                           (.on watcher "change" (fn [path]
+                                                                                   (println path "changed, recompiling")
+                                                                                   (-> (compile [(name build-id)])
+                                                                                       (.on "exit" (fn []
+                                                                                                     (println "Recompile done!" compiled-file)
+                                                                                                     (.emit file "rerun"))))))
+                                                           watcher)
+                                                :compiled-file compiled-file})
+                (.on file "close" (fn []
+                                    (println "Remove watcher for" filePath)
+                                    (when-let [{:keys [watcher]} (get @watchers filePath)]
+                                      (.close watcher))
+                                    (swap! watchers dissoc filePath)
+                                    true)))
+              (js/Promise. (fn [resolve _reject]
+                             (println "Compiling" filePath)
+                             (-> (compile [(name build-id)])
+                                 (.on "exit" (fn [_]
+                                               (println "Compile done!" compiled-file)
+                                               (resolve compiled-file)))))))))))))

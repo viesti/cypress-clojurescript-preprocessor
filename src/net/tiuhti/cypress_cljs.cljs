@@ -104,7 +104,16 @@
                              (when (.includes s "nREPL server started")
                                (reset! ready true))
                              (println (.trimEnd s))))
-          stopping       (atom false)]
+          stopping       (atom false)
+          stop-fn        (fn []
+                           (when @stopping
+                             (println "Stop in progress"))
+                           (when-not @stopping
+                             (reset! stopping true)
+                             (println (str (.-pid process) ": Stopping shadow-cljs server"))
+                             (let [output (cp/spawnSync "shadow-cljs" #js ["stop"] opts)]
+                               (println "stdout:" (.trimEnd (buffer->str (.-stdout output))))
+                               (println "stderr:" (.trimEnd (buffer->str (.-stderr output)))))))]
       ;; TODO: Option for compiling all tests at start
       #_(add-watch ready :compile (fn [_]
                                   (compile (map name (keys builds)))))
@@ -112,15 +121,8 @@
           (.on "data" output-fn))
       (-> (.-stderr shadow-process)
           (.on "data" output-fn))
-      (.on process "SIGINT" (fn [_code]
-                              (when @stopping
-                                (println "Stop in progress"))
-                              (when-not @stopping
-                                (reset! stopping true)
-                                (println (str (.-pid process) ": Stopping shadow-cljs server"))
-                                (let [output (cp/spawnSync "shadow-cljs" #js ["stop"] opts)]
-                                  (println "stdout:" (.trimEnd (buffer->str (.-stdout output))))
-                                  (println "stderr:" (.trimEnd (buffer->str (.-stderr output))))))))
+      (.on process "SIGINT" stop-fn)
+      (.on process "SIGTERM" stop-fn)
       (fn preprocessor [file]
         (let [filePath (.-filePath file)]
           (if-not (.endsWith filePath ".cljs")

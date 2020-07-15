@@ -13,6 +13,8 @@
 
 (def working-directory ".preprocessor-cljs")
 
+(def shadow-cljs-bin-path "../node_modules/.bin/shadow-cljs")
+
 (def default-config
   {:dependencies []
    :builds       {}})
@@ -40,7 +42,7 @@
   (.write decoder buf))
 
 (defn compile [build-ids]
-  (let [process (cp/spawn "shadow-cljs"
+  (let [process (cp/spawn shadow-cljs-bin-path
                           (clj->js (into ["compile"] build-ids))
                           #js {:cwd working-directory})]
     (-> process
@@ -96,11 +98,9 @@
                                     (assoc :builds builds))]
     (when-not (.existsSync fs working-directory)
       (.mkdirSync fs working-directory))
-    (.writeFileSync fs (str working-directory "/" "package.json") "{}")
     (write-edn config-path config)
     (println "Starting shadow-cljs server")
-    (let [opts           #js {:cwd working-directory}
-          shadow-process (cp/spawn "shadow-cljs" #js ["server"] opts)
+    (let [shadow-process (cp/spawn shadow-cljs-bin-path #js ["server"] #js {:cwd working-directory})
           ready          (atom false)
           output-fn      (fn [data]
                            (let [s (buffer->str data)]
@@ -114,7 +114,7 @@
                            (when-not @stopping
                              (reset! stopping true)
                              (println "Stopping shadow-cljs server")
-                             (let [output (cp/spawnSync "shadow-cljs" #js ["stop"] opts)]
+                             (let [output (cp/spawnSync shadow-cljs-bin-path #js ["stop"] #js {:cwd working-directory})]
                                (println "stdout:" (.trimEnd (buffer->str (g/get output "stdout"))))
                                (println "stderr:" (.trimEnd (buffer->str (g/get output "stderr")))))))]
       ;; TODO: Option for compiling all tests at start

@@ -5,6 +5,7 @@
             ["process" :as process]
             ["path" :as path]
             ["chokidar" :as chokidar]
+            [goog.object :as g]
             [clojure.edn :as edn]
             [clojure.string :as str]
             [cljs.pprint :refer [pprint]]))
@@ -25,9 +26,9 @@
                  (stat dir)
                  dir)]
     (map (fn [dirent]
-           {:file-name (.-name dirent)
+           {:file-name (g/get dirent "name")
             :directory? (.isDirectory dirent)
-            :path (str (or (:path parent) (:file-name parent)) "/" (.-name dirent))})
+            :path (str (or (:path parent) (:file-name parent)) "/" (g/get dirent "name"))})
          (.readdirSync fs
                        (or (:path parent) (:file-name parent))
                        (clj->js {:withFileTypes true})))))
@@ -42,7 +43,7 @@
                           (clj->js (into ["compile"] build-ids))
                           #js {:cwd working-directory})]
     (-> process
-        (.-stdout)
+        (g/get "stdout")
         (.on "data" (fn [data]
                       (println (str "Compile: " (.trimEnd (buffer->str data)))))))
     process))
@@ -62,7 +63,7 @@
 (def watchers (atom {}))
 
 (defn make-cljs-preprocessor [config]
-  (let [integration-folder      (.-integrationFolder config)
+  (let [integration-folder      (g/get config "integrationFolder")
         relative-to-integration (fn [path]
                                   (.replace path (str integration-folder "/") ""))
         test-files              (->> (tree-seq :directory? read-dir (stat integration-folder))
@@ -110,21 +111,21 @@
                              (println "Stop in progress"))
                            (when-not @stopping
                              (reset! stopping true)
-                             (println (str (.-pid process) ": Stopping shadow-cljs server"))
+                             (println "Stopping shadow-cljs server")
                              (let [output (cp/spawnSync "shadow-cljs" #js ["stop"] opts)]
-                               (println "stdout:" (.trimEnd (buffer->str (.-stdout output))))
-                               (println "stderr:" (.trimEnd (buffer->str (.-stderr output)))))))]
+                               (println "stdout:" (.trimEnd (buffer->str (g/get output "stdout"))))
+                               (println "stderr:" (.trimEnd (buffer->str (g/get output "stderr")))))))]
       ;; TODO: Option for compiling all tests at start
       #_(add-watch ready :compile (fn [_]
                                   (compile (map name (keys builds)))))
-      (-> (.-stdout shadow-process)
+      (-> (g/get shadow-process "stdout")
           (.on "data" output-fn))
-      (-> (.-stderr shadow-process)
+      (-> (g/get shadow-process "stderr")
           (.on "data" output-fn))
       (.on process "SIGINT" stop-fn)
       (.on process "SIGTERM" stop-fn)
       (fn preprocessor [file]
-        (let [filePath (.-filePath file)]
+        (let [filePath (g/get file "filePath")]
           (if-not (.endsWith filePath ".cljs")
             filePath
             (let [test-name     (-> filePath
@@ -147,8 +148,8 @@
                                                                         :output-dir       output-dir
                                                                         :asset-path       (str "/" output-dir)
                                                                         :modules          {build-id {:entries [(namespace-symbol test-file)]}}}])]
-                  (.writeFileSync fs config-path (with-out-str (pprint config)))))
-              (when (and (.-shouldWatch file)
+                  (write-edn config-path config)))
+              (when (and (g/get file "shouldWatch")
                          (not (contains? @watchers filePath)))
                 (println "Add watcher for" filePath)
                 (swap! watchers assoc filePath {:watcher (let [watcher (chokidar/watch filePath)]
@@ -156,7 +157,6 @@
                                                                                    (println path "changed, recompiling")
                                                                                    (-> (compile [(name build-id)])
                                                                                        (.on "exit" (fn []
-                                                                                                     (println "Recompile done!" compiled-file)
                                                                                                      (.emit file "rerun"))))))
                                                            watcher)
                                                 :compiled-file compiled-file})

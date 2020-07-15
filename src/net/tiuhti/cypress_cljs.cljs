@@ -5,6 +5,7 @@
             ["process" :as process]
             ["path" :as path]
             ["chokidar" :as chokidar]
+            ["events" :as EventEmitter]
             [goog.object :as g]
             [clojure.edn :as edn]
             [clojure.string :as str]
@@ -43,7 +44,7 @@
                           (clj->js (into ["compile"] build-ids))
                           #js {:cwd working-directory})]
     (-> process
-        (g/get "stdout")
+        ^EventEmitter (g/get "stdout")
         (.on "data" (fn [data]
                       (println (str "Compile: " (.trimEnd (buffer->str data)))))))
     process))
@@ -95,6 +96,7 @@
                                     (assoc :builds builds))]
     (when-not (.existsSync fs working-directory)
       (.mkdirSync fs working-directory))
+    (.writeFileSync fs (str working-directory "/" "package.json") "{}")
     (write-edn config-path config)
     (println "Starting shadow-cljs server")
     (let [opts           #js {:cwd working-directory}
@@ -118,9 +120,9 @@
       ;; TODO: Option for compiling all tests at start
       #_(add-watch ready :compile (fn [_]
                                   (compile (map name (keys builds)))))
-      (-> (g/get shadow-process "stdout")
+      (-> ^EventEmitter (g/get shadow-process "stdout")
           (.on "data" output-fn))
-      (-> (g/get shadow-process "stderr")
+      (-> ^EventEmitter (g/get shadow-process "stderr")
           (.on "data" output-fn))
       (.on process "SIGINT" stop-fn)
       (.on process "SIGTERM" stop-fn)
@@ -157,15 +159,15 @@
                                                                                    (println path "changed, recompiling")
                                                                                    (-> (compile [(name build-id)])
                                                                                        (.on "exit" (fn []
-                                                                                                     (.emit file "rerun"))))))
+                                                                                                     (.emit ^EventEmitter file "rerun"))))))
                                                            watcher)
                                                 :compiled-file compiled-file})
-                (.on file "close" (fn []
-                                    (println "Remove watcher for" filePath)
-                                    (when-let [{:keys [watcher]} (get @watchers filePath)]
-                                      (.close watcher))
-                                    (swap! watchers dissoc filePath)
-                                    true)))
+                (.on ^EventEmitter file "close" (fn []
+                                                  (println "Remove watcher for" filePath)
+                                                  (when-let [{:keys [watcher]} (get @watchers filePath)]
+                                                    (.close watcher))
+                                                  (swap! watchers dissoc filePath)
+                                                  true)))
               (js/Promise. (fn [resolve _reject]
                              (println "Compiling" filePath)
                              (-> (compile [(name build-id)])

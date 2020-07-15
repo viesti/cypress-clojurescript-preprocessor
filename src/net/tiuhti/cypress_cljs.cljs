@@ -104,7 +104,7 @@
           ready          (atom false)
           output-fn      (fn [data]
                            (let [s (buffer->str data)]
-                             (when (.includes s "nREPL server started")
+                             (when (.includes s "server version")
                                (reset! ready true))
                              (println (.trimEnd s))))
           stopping       (atom false)
@@ -170,7 +170,11 @@
                                                   true)))
               (js/Promise. (fn [resolve _reject]
                              (println "Compiling" filePath)
-                             (-> (compile [(name build-id)])
-                                 (.on "exit" (fn [_]
-                                               (println "Compile done!" compiled-file)
-                                               (resolve compiled-file)))))))))))))
+                             (let [compile-fn (fn []
+                                                (-> (compile [(name build-id)])
+                                                    (.on "exit" (fn [_]
+                                                                  (println "Compile done!" compiled-file)
+                                                                  (resolve compiled-file)))))]
+                               (if-not @ready
+                                 (add-watch ready :compile (fn [& _args] (compile-fn)))
+                                 (compile-fn))))))))))))

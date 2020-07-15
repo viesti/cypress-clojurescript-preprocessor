@@ -78,7 +78,7 @@
                                                                last
                                                                (.split ".")
                                                                first)
-                                                output-dir (str "out-" test-name)
+                                                output-dir (str "out/" test-name)
                                                 entry      (namespace-symbol test-file)
                                                 build-id   (keyword test-name)]
                                             (assoc acc
@@ -135,7 +135,7 @@
                                     last
                                     (.split ".")
                                     first)
-                  compiled-file (str/join [(path/resolve working-directory (str "out-" test-name))
+                  compiled-file (str/join [(path/resolve working-directory (str "out/" test-name))
                                            "/"
                                            test-name
                                            ".js"])
@@ -144,7 +144,7 @@
                   config        (read-edn config-path)]
               (when-not (contains? (:builds config) build-id)
                 (println "Updating shadow-cljs.edn")
-                (let [output-dir (str "out-" test-name)
+                (let [output-dir (str "out/" test-name)
                       config     (update config :builds conj [build-id {:target           :browser
                                                                         :compiler-options {:optimizations :simple}
                                                                         :output-dir       output-dir

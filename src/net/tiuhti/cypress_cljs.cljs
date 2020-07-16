@@ -6,7 +6,6 @@
             ["path" :as path]
             ["chokidar" :as chokidar]
             ["events" :as EventEmitter]
-            [goog.object :as g]
             [clojure.edn :as edn]
             [clojure.string :as str]
             [cljs.pprint :refer [pprint]]))
@@ -29,9 +28,9 @@
                  (stat dir)
                  dir)]
     (map (fn [dirent]
-           {:file-name (g/get dirent "name")
+           {:file-name (.-name dirent)
             :directory? (.isDirectory dirent)
-            :path (str (or (:path parent) (:file-name parent)) "/" (g/get dirent "name"))})
+            :path (str (or (:path parent) (:file-name parent)) "/" (.-name dirent))})
          (.readdirSync fs
                        (or (:path parent) (:file-name parent))
                        (clj->js {:withFileTypes true})))))
@@ -45,8 +44,7 @@
   (let [process (cp/spawn shadow-cljs-bin-path
                           (clj->js (into ["compile"] build-ids))
                           #js {:cwd working-directory})]
-    (-> process
-        ^EventEmitter (g/get "stdout")
+    (-> ^EventEmitter (.-stdout process)
         (.on "data" (fn [data]
                       (println (str "Compile: " (.trimEnd (buffer->str data)))))))
     process))
@@ -66,7 +64,7 @@
 (def watchers (atom {}))
 
 (defn make-cljs-preprocessor [config]
-  (let [integration-folder      (g/get config "integrationFolder")
+  (let [integration-folder      (.-integrationFolder ^js config)
         relative-to-integration (fn [path]
                                   (.replace path (str integration-folder "/") ""))
         test-files              (->> (tree-seq :directory? read-dir (stat integration-folder))
@@ -115,19 +113,19 @@
                              (reset! stopping true)
                              (println "Stopping shadow-cljs server")
                              (let [output (cp/spawnSync shadow-cljs-bin-path #js ["stop"] #js {:cwd working-directory})]
-                               (println "stdout:" (.trimEnd (buffer->str (g/get output "stdout"))))
-                               (println "stderr:" (.trimEnd (buffer->str (g/get output "stderr")))))))]
+                               (println "stdout:" (.trimEnd (buffer->str (.-stdout output))))
+                               (println "stderr:" (.trimEnd (buffer->str (.-stderr output)))))))]
       ;; TODO: Option for compiling all tests at start
       #_(add-watch ready :compile (fn [_]
                                   (compile (map name (keys builds)))))
-      (-> ^EventEmitter (g/get shadow-process "stdout")
+      (-> ^EventEmitter (.-stdout shadow-process)
           (.on "data" output-fn))
-      (-> ^EventEmitter (g/get shadow-process "stderr")
+      (-> ^EventEmitter (.-stderr shadow-process)
           (.on "data" output-fn))
       (.on process "SIGINT" stop-fn)
       (.on process "SIGTERM" stop-fn)
       (fn preprocessor [file]
-        (let [filePath (g/get file "filePath")]
+        (let [filePath (.-filePath ^js file)]
           (if-not (.endsWith filePath ".cljs")
             filePath
             (let [test-name     (-> filePath
@@ -151,7 +149,7 @@
                                                                         :asset-path       (str "/" output-dir)
                                                                         :modules          {build-id {:entries [(namespace-symbol test-file)]}}}])]
                   (write-edn config-path config)))
-              (when (and (g/get file "shouldWatch")
+              (when (and (.-shouldWatch ^js file)
                          (not (contains? @watchers filePath)))
                 (println "Add watcher for" filePath)
                 (swap! watchers assoc filePath {:watcher (let [watcher (chokidar/watch filePath)]
@@ -159,7 +157,7 @@
                                                                                    (println path "changed, recompiling")
                                                                                    (-> (compile [(name build-id)])
                                                                                        (.on "exit" (fn []
-                                                                                                     (.emit ^EventEmitter file "rerun"))))))
+                                                                                                     (.emit ^js file "rerun"))))))
                                                            watcher)
                                                 :compiled-file compiled-file})
                 (.on ^EventEmitter file "close" (fn []

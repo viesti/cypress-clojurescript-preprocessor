@@ -1,4 +1,6 @@
 {:source-paths ["src"]
+ :dependencies [[io.nervous/cljs-nodejs-externs "0.2.0"]]
  :builds {:app {:target :node-library
                 :output-to "out/dist.js"
-                :exports-var net.tiuhti.cypress-cljs/make-cljs-preprocessor}}}
+                :exports-var net.tiuhti.cypress-cljs/make-cljs-preprocessor
+                :compiler-options {:infer-externs :auto}}}}

@@ -4,11 +4,11 @@ ClojureScript preprocessor for Cypress
 
 ## Usage:
 
-1. Install [shadow-cljs](https://shadow-cljs.github.io/docs/UsersGuide.html#_installation)
+1. Install [shadow-cljs](https://shadow-cljs.github.io/docs/UsersGuide.html#_installation) (globally, for now)
 
    ```sh
    $ echo {} > package.json
-   $ npm install --save-dev shadow-cljs
+   $ npm install -g shadow-cljs
    ```
 
 2. Install [Cypress](https://docs.cypress.io/guides/getting-started/installing-cypress.html#Installing)
@@ -34,7 +34,7 @@ ClojureScript preprocessor for Cypress
    $ mkdir -p cypress/plugins
    $ cat << EOF > cypress/plugins/index.js
    const makeCljsPreprocessor = require('cypress-preprocessor-cljs');
-
+   
    /**
     * @type {Cypress.PluginConfig}
     */
@@ -43,6 +43,14 @@ ClojureScript preprocessor for Cypress
    };
    EOF
    ```
+
+   4.1 Prevent Cypress from writing examples for support files
+
+   ```sh
+   mkdir cypress/support
+   ```
+
+   
 
 5. Write test in ClojureScript
 

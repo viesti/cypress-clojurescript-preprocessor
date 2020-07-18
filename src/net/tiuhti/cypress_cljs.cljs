@@ -83,11 +83,10 @@
                                                 build-id   (keyword test-name)]
                                             (assoc acc
                                                    build-id
-                                                   {:target           :browser
-                                                    :compiler-options {:optimizations :simple}
-                                                    :output-dir       output-dir
-                                                    :asset-path       (str "/" output-dir)
-                                                    :modules          {build-id {:entries [entry]}}})))
+                                                   {:target     :browser
+                                                    :output-dir output-dir
+                                                    :asset-path (str "/" output-dir)
+                                                    :modules    {build-id {:entries [entry]}}})))
                                         {}
                                         test-files)
         config-path             (str working-directory "/" "shadow-cljs.edn")

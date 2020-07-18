@@ -151,13 +151,13 @@
               (when (and (.-shouldWatch ^js file)
                          (not (contains? @watchers filePath)))
                 (println "Add watcher for" filePath)
-                (swap! watchers assoc filePath {:watcher (let [watcher (chokidar/watch filePath)]
-                                                           (.on watcher "change" (fn [path]
-                                                                                   (println path "changed, recompiling")
-                                                                                   (-> (compile [(name build-id)])
-                                                                                       (.on "exit" (fn []
-                                                                                                     (.emit ^js file "rerun"))))))
-                                                           watcher)
+                (swap! watchers assoc filePath {:watcher       (let [watcher (chokidar/watch filePath)]
+                                                                 (.on watcher "change" (fn [path]
+                                                                                         (println path "changed, recompiling")
+                                                                                         (-> (compile [(name build-id)])
+                                                                                             (.on "exit" (fn []
+                                                                                                           (.emit ^js file "rerun"))))))
+                                                                 watcher)
                                                 :compiled-file compiled-file})
                 (.on ^EventEmitter file "close" (fn []
                                                   (println "Remove watcher for" filePath)

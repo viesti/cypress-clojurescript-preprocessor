@@ -17,15 +17,15 @@ ClojureScript preprocessor for Cypress
    $ npm install cypress --save-dev
    ```
 
-3. WIP: Install cypress-preprocessor-cljs
+3. WIP: Install cypress-clojurescript-preprocessor
 
    ```sh
-   $ git clone git@github.com:viesti/cypress-preprocessor-cljs.git
-   $ cd cypress-preprocessor-cljs
+   $ git clone git@github.com:viesti/cypress-clojurescript-preprocessor.git
+   $ cd cypress-clojurescript-preprocessor
    $ npm install
    $ ./node_modules/.bin/shadow-cljs release app
    $ cd ..
-   $ npm install cypress-preprocessor-cljs --save-dev
+   $ npm install cypress-clojurescript-preprocessor --save-dev
    ```
 
 4. Configure ClojureScript preprocessor
@@ -41,7 +41,7 @@ ClojureScript preprocessor for Cypress
       ```sh
       $ mkdir -p cypress/plugins
       $ cat << EOF > cypress/plugins/index.js
-      const makeCljsPreprocessor = require('cypress-preprocessor-cljs');
+      const makeCljsPreprocessor = require('cypress-clojurescript-preprocessor');
       // Create the default Browserify preprocessor for files other than *.cljs
       const makeBrowserifyPreprocessor = require('@cypress/browserify-preprocessor');
       /**

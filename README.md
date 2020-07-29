@@ -1,4 +1,4 @@
-# cypress-preprocessor-cljs
+# cypress-clojurescript-preprocessor
 
 ClojureScript preprocessor for Cypress
 

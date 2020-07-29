@@ -42,7 +42,7 @@ ClojureScript preprocessor for Cypress
       $ mkdir -p cypress/plugins
       $ cat << EOF > cypress/plugins/index.js
       const makeCljsPreprocessor = require('cypress-preprocessor-cljs');
-// Create the default Browserify preprocessor for files other than *.cljs
+      // Create the default Browserify preprocessor for files other than *.cljs
       const makeBrowserifyPreprocessor = require('@cypress/browserify-preprocessor');
       /**
        * @type {Cypress.PluginConfig}
@@ -51,7 +51,7 @@ ClojureScript preprocessor for Cypress
         const browserifyPreprocessor = makeBrowserifyPreprocessor();
         const cljsPreprocessor = makeCljsPreprocessor(config);
         // Use the default Browserify preprocessor for files other than *.cljs
-     on('file:preprocessor', (file) => file.filePath.endsWith('.cljs') ? cljsPreprocessor(file) : browserifyPreprocessor(file));
+        on('file:preprocessor', (file) => file.filePath.endsWith('.cljs') ? cljsPreprocessor(file) : browserifyPreprocessor(file));
       };
    EOF
       ```

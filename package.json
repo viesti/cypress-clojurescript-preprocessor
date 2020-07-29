@@ -17,5 +17,9 @@
     "cypress",
     "cypress-plugin",
     "cypress-preprocessor"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/viesti/cypress-clojurescript-preprocessor"
+  }
 }

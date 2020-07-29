@@ -28,30 +28,33 @@ ClojureScript preprocessor for Cypress
    $ npm install cypress-preprocessor-cljs --save-dev
    ```
 
-4. Add cypress-preprocessor-cljs to `cypress/plugins/index.js`
+4. Configure ClojureScript preprocessor
 
-   ```sh
-   $ mkdir -p cypress/plugins
-   $ cat << EOF > cypress/plugins/index.js
-   const makeCljsPreprocessor = require('cypress-preprocessor-cljs');
-   
-   /**
-    * @type {Cypress.PluginConfig}
-    */
-   module.exports = (on, config) => {
-       on('file:preprocessor', makeCljsPreprocessor(config));
-   };
+   1. Install  `@cypress/browserify-preprocessor` to keep the [default Browserify preprocessor](https://docs.cypress.io/api/plugins/preprocessors-api.html#Defaults)
+
+      ```sh
+       npm install --save-dev @cypress/browserify-preprocessor
+      ```
+
+   2. Add cypress-preprocessor-cljs to `cypress/plugins/index.js`
+
+      ```sh
+      $ mkdir -p cypress/plugins
+      $ cat << EOF > cypress/plugins/index.js
+      const makeCljsPreprocessor = require('cypress-preprocessor-cljs');
+// Create the default Browserify preprocessor for files other than *.cljs
+      const makeBrowserifyPreprocessor = require('@cypress/browserify-preprocessor');
+      /**
+       * @type {Cypress.PluginConfig}
+       */
+      module.exports = (on, config) => {
+        const browserifyPreprocessor = makeBrowserifyPreprocessor();
+        const cljsPreprocessor = makeCljsPreprocessor(config);
+        // Use the default Browserify preprocessor for files other than *.cljs
+     on('file:preprocessor', (file) => file.filePath.endsWith('.cljs') ? cljsPreprocessor(file) : browserifyPreprocessor(file));
+      };
    EOF
-   ```
-
-   4.1 Prevent Cypress from writing examples for support files
-
-   ```sh
-   mkdir cypress/support
-   ```
-
-   
-
+      ```
 5. Write test in ClojureScript
 
    ```sh

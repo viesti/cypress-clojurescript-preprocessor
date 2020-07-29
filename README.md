@@ -4,11 +4,11 @@ ClojureScript preprocessor for Cypress
 
 ## Usage:
 
-1. Install [shadow-cljs](https://shadow-cljs.github.io/docs/UsersGuide.html#_installation) (globally, for now)
+1. Create a project
 
    ```sh
+   $ mkdir cypress-cljs-sample
    $ echo {} > package.json
-   $ npm install -g shadow-cljs
    ```
 
 2. Install [Cypress](https://docs.cypress.io/guides/getting-started/installing-cypress.html#Installing)
@@ -17,17 +17,12 @@ ClojureScript preprocessor for Cypress
    $ npm install cypress --save-dev
    ```
 
-3. WIP: Install cypress-clojurescript-preprocessor
+3. Install cypress-clojurescript-preprocessor
 
    ```sh
-   $ git clone git@github.com:viesti/cypress-clojurescript-preprocessor.git
-   $ cd cypress-clojurescript-preprocessor
-   $ npm install
-   $ ./node_modules/.bin/shadow-cljs release app
-   $ cd ..
-   $ npm install cypress-clojurescript-preprocessor --save-dev
+   $ npm install cypress-clojurescript-preprocessor
    ```
-
+   
 4. Configure ClojureScript preprocessor
 
    1. Install  `@cypress/browserify-preprocessor` to keep the [default Browserify preprocessor](https://docs.cypress.io/api/plugins/preprocessors-api.html#Defaults)
@@ -55,6 +50,7 @@ ClojureScript preprocessor for Cypress
       };
       EOF
       ```
+
 5. Write test in ClojureScript
 
    ```sh

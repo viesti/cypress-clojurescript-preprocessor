@@ -23,7 +23,7 @@ ClojureScript preprocessor for Cypress
    ```sh
    $ npm install cypress-clojurescript-preprocessor
    ```
-   
+
 4. Configure ClojureScript preprocessor
 
    1. Install  `@cypress/browserify-preprocessor` to keep the [default Browserify preprocessor](https://docs.cypress.io/api/plugins/preprocessors-api.html#Defaults)
@@ -51,27 +51,23 @@ ClojureScript preprocessor for Cypress
       };
       EOF
       ```
-
 5. Write test in ClojureScript
 
    ```sh
    $ mkdir -p cypress/integration/examples
    $ cat << EOF > cypress/integration/examples/window.cljs
-   (ns examples.window)
+   (ns examples.window
+     (:require-macros [latte.core :refer [describe beforeEach it]]))
 
    (def cy js/cy)
 
-   (js/context "Window"
-       (fn []
-         (js/beforeEach
-          (fn []
-            (.visit cy "https://example.cypress.io/commands/window")))
-         (js/it "cy.window() - get the global window object"
-           (fn []
-             (.should (.window cy) "have.property" "top")))))
+   (describe "Window"
+     (beforeEach []
+       (.visit cy "https://example.cypress.io/commands/window"))
+     (it "cy.window() - get the global window object" []
+       (.should (.window cy) "have.property" "top")))
    EOF
    ```
-
 6. Run test
 
    ```sh

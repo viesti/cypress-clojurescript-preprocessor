@@ -15,7 +15,8 @@
 (def shadow-cljs-bin-path "../node_modules/.bin/shadow-cljs")
 
 (def default-config
-  {:dependencies []
+  {:dependencies [['mocha-latte "0.1.2"]
+                  ['chai-latte "0.2.0"]]
    :builds       {}})
 
 (defn stat [dir]

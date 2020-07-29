@@ -73,3 +73,8 @@ ClojureScript preprocessor for Cypress
    ```sh
    $ ./node_modules/.bin/cypress open
    ```
+
+## Changelog
+
+* 0.1.2 Bundle Bundle mocha-latte and chai-latte 
+* 0.1.0 Initial release

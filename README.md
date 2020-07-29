@@ -53,7 +53,7 @@ ClojureScript preprocessor for Cypress
         // Use the default Browserify preprocessor for files other than *.cljs
         on('file:preprocessor', (file) => file.filePath.endsWith('.cljs') ? cljsPreprocessor(file) : browserifyPreprocessor(file));
       };
-   EOF
+      EOF
       ```
 5. Write test in ClojureScript
 

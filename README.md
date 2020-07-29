@@ -8,6 +8,7 @@ ClojureScript preprocessor for Cypress
 
    ```sh
    $ mkdir cypress-cljs-sample
+   $ cd cypress-cljs-sample
    $ echo {} > package.json
    ```
 

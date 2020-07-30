@@ -1,8 +1,8 @@
 # cypress-clojurescript-preprocessor
 
-ClojureScript preprocessor for Cypress
+ClojureScript preprocessor for Cypress.
 
-## Usage:
+## Example usage
 
 1. Create a project
 
@@ -73,6 +73,12 @@ ClojureScript preprocessor for Cypress
    ```sh
    $ ./node_modules/.bin/cypress open
    ```
+
+## Configuration
+
+### Shadow CLJS configuration override
+
+The Shadow CLJS configuration used by the preprocessor may be overridden via a `shadow-cljs-override.edn` file, which is merged on top of the default configuration with [meta-merge](https://github.com/weavejester/meta-merge). By default, `[mocha-latte "0.1.2"]` and `[chai-latte "0.2.0"]` are included in the shadow-cljs.edn configuration used by the preprocessor.
 
 ## Changelog
 

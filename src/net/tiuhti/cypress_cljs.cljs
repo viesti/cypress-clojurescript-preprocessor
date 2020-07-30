@@ -8,7 +8,8 @@
             ["events" :as EventEmitter]
             [clojure.edn :as edn]
             [clojure.string :as str]
-            [cljs.pprint :refer [pprint]]))
+            [cljs.pprint :refer [pprint]]
+            [meta-merge.core :as m]))
 
 (def working-directory ".preprocessor-cljs")
 
@@ -18,6 +19,8 @@
   {:dependencies [['mocha-latte "0.1.2"]
                   ['chai-latte "0.2.0"]]
    :builds       {}})
+
+(def override-config-path "shadow-cljs-override.edn")
 
 (defn stat [dir]
   (let [stat (.statSync fs dir)]
@@ -92,6 +95,8 @@
                                         test-files)
         config-path             (str working-directory "/" "shadow-cljs.edn")
         config                  (-> default-config
+                                    (m/meta-merge (when (.existsSync fs override-config-path)
+                                                    (read-edn override-config-path)))
                                     (assoc :source-paths [integration-folder])
                                     (assoc :builds builds))]
     (when-not (.existsSync fs working-directory)
@@ -139,7 +144,9 @@
                                            ".js"])
                   build-id      (keyword test-name)
                   test-file     (relative-to-integration filePath)
-                  config        (read-edn config-path)]
+                  config        (-> (read-edn config-path)
+                                    (m/meta-merge (when (.existsSync fs override-config-path)
+                                                    (read-edn override-config-path))))]
               (when-not (contains? (:builds config) build-id)
                 (println "Updating shadow-cljs.edn")
                 (let [output-dir (str "out/" test-name)

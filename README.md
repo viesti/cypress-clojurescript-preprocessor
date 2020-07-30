@@ -30,31 +30,29 @@ The shadow-cljs server is kept running while the Cypress runner is active. When 
 
 4. Configure ClojureScript preprocessor
 
-   1. Install  `@cypress/browserify-preprocessor` to keep the [default Browserify preprocessor](https://docs.cypress.io/api/plugins/preprocessors-api.html#Defaults)
+   ```sh
+   $ mkdir -p cypress/plugins
+   $ cat << EOF > cypress/plugins/index.js
+   const makeCljsPreprocessor = require('cypress-clojurescript-preprocessor');
+   /**
+    * @type {Cypress.PluginConfig}
+    */
+   module.exports = (on, config) => {
+     on('file:preprocessor', makeCljsPreprocessor(config));
+   };
+   EOF
+   ```
 
-      ```sh
-       npm install --save-dev @cypress/browserify-preprocessor
-      ```
+   This will delegate files other than `*.cljs` to the [default Browserify preprocessor](https://docs.cypress.io/api/plugins/preprocessors-api.html#Defaults). If you need to run other preprocessors, then combine them with for example:
 
-   2. Add cypress-preprocessor-cljs to `cypress/plugins/index.js`
-
-      ```sh
-      $ mkdir -p cypress/plugins
-      $ cat << EOF > cypress/plugins/index.js
-      const makeCljsPreprocessor = require('cypress-clojurescript-preprocessor');
-      // Create the default Browserify preprocessor for files other than *.cljs
-      const makeBrowserifyPreprocessor = require('@cypress/browserify-preprocessor');
-      /**
-       * @type {Cypress.PluginConfig}
-       */
-      module.exports = (on, config) => {
-        const browserifyPreprocessor = makeBrowserifyPreprocessor();
-        const cljsPreprocessor = makeCljsPreprocessor(config);
-        // Use the default Browserify preprocessor for files other than *.cljs
-        on('file:preprocessor', (file) => file.filePath.endsWith('.cljs') ? cljsPreprocessor(file) : browserifyPreprocessor(file));
-      };
-      EOF
-      ```
+   ```js
+   module.exports = (on, config) => {
+     const browserifyPreprocessor = makeBrowserifyPreprocessor();
+     const cljsPreprocessor = makeCljsPreprocessor(config);
+     // Use the default Browserify preprocessor for files other than *.cljs
+     on('file:preprocessor', (file) => file.filePath.endsWith('.cljs') ? cljsPreprocessor(file) : browserifyPreprocessor(file));
+   };
+   ```
 5. Write test in ClojureScript
 
    ```sh
@@ -86,6 +84,7 @@ The Shadow CLJS configuration used by the preprocessor may be overridden via a `
 
 ## Changelog
 
+* 0.1.4 Bundle browserify preprocessor
 * 0.1.3 Add shadow-cljs-override.edn
 * 0.1.2 Bundle Bundle mocha-latte and chai-latte
 * 0.1.0 Initial release

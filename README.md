@@ -1,6 +1,10 @@
 # cypress-clojurescript-preprocessor
 
-ClojureScript preprocessor for Cypress.
+A [Cypress preprocessor](https://docs.cypress.io/api/plugins/preprocessors-api.html) for [ClojureScript](https://clojurescript.org/), which uses [Shadow CLJS](http://shadow-cljs.org/) for processing Cypress tests written in ClojureScript.
+
+The plugin works by inspecting the Cypress `integrationFolder` (by default, `cypress/integration`) for ClojureScript files (`*.cljs`, e.g. `cypress/integration/my_app/app_test.cljs` -> `(ns my-app.app-test)`) and generates a `shadow-cljs.edn` configuration file with a build for each test file. This configuration is then used to compile the tests into Javascript before submitting to the browser.
+
+The shadow-cljs server is kept running while the Cypress runner is active. When a test is run, the test file is watched for changes and a recompile is done if the test file is changed and Cypress is notified to rerun the test. The first compile is a bit slow, but subsequent compiles are fast (the plugin uses shadow-cljs `compile` command, which defaults to [`optimizations: none`](https://shadow-cljs.github.io/docs/UsersGuide.html#Optimization)).
 
 ## Example usage
 
@@ -82,5 +86,6 @@ The Shadow CLJS configuration used by the preprocessor may be overridden via a `
 
 ## Changelog
 
-* 0.1.2 Bundle Bundle mocha-latte and chai-latte 
+* 0.1.3 Add shadow-cljs-override.edn
+* 0.1.2 Bundle Bundle mocha-latte and chai-latte
 * 0.1.0 Initial release

@@ -1,6 +1,6 @@
 # cypress-clojurescript-preprocessor
 
-A [Cypress preprocessor](https://docs.cypress.io/api/plugins/preprocessors-api.html) for [ClojureScript](https://clojurescript.org/), which uses [Shadow CLJS](http://shadow-cljs.org/) for processing Cypress tests written in ClojureScript.
+A [Cypress preprocessor](https://docs.cypress.io/api/plugins/preprocessors-api.html) for [ClojureScript](https://clojurescript.org/), which uses [Shadow CLJS](https://github.com/thheller/shadow-cljs) for processing Cypress tests written in ClojureScript.
 
 The plugin works by inspecting the Cypress `integrationFolder` (by default, `cypress/integration`) for ClojureScript files (`*.cljs`, e.g. `cypress/integration/my_app/app_test.cljs` -> `(ns my-app.app-test)`) and generates a `shadow-cljs.edn` configuration file with a build for each test file. This configuration is then used to compile the tests into Javascript before submitting to the browser.
 

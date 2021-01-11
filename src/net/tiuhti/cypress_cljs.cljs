@@ -9,8 +9,7 @@
             [clojure.edn :as edn]
             [clojure.string :as str]
             [cljs.pprint :refer [pprint]]
-            [meta-merge.core :as m]
-            ["@cypress/browserify-preprocessor" :as browserify-preprocessor]))
+            [meta-merge.core :as m]))
 
 (def working-directory ".preprocessor-cljs")
 
@@ -99,8 +98,7 @@
                                     (m/meta-merge (when (.existsSync fs override-config-path)
                                                     (read-edn override-config-path)))
                                     (assoc :source-paths [integration-folder])
-                                    (assoc :builds builds))
-        default-preprocessor    (browserify-preprocessor)]
+                                    (assoc :builds builds))]
     (when-not (.existsSync fs working-directory)
       (.mkdirSync fs working-directory))
     (write-edn config-path config)
@@ -134,7 +132,7 @@
       (fn preprocessor [file]
         (let [filePath (.-filePath ^js file)]
           (if-not (.endsWith filePath ".cljs")
-            (default-preprocessor file)
+            filePath
             (let [test-name     (-> filePath
                                     (.split "/")
                                     last

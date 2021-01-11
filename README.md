@@ -43,7 +43,15 @@ The shadow-cljs server is kept running while the Cypress runner is active. When 
    EOF
    ```
 
-   This will delegate files other than `*.cljs` to the [default Browserify preprocessor](https://docs.cypress.io/api/plugins/preprocessors-api.html#Defaults). If you need to run other preprocessors, then combine them with for example:
+   ClojureScript preprocessor will only process `*.cljs` files; other files will be untouched.  Other files can be delegated to the [default Browserify preprocessor](https://docs.cypress.io/api/plugins/preprocessors-api.html#Defaults) or other preprocessors.  For example:
+
+   1. Install `@cypress/browserify-preprocessor` to use the [default Browserify preprocessor](https://docs.cypress.io/api/plugins/preprocessors-api.html#Defaults)
+
+      ```sh
+       npm install @cypress/browserify-preprocessor --save-dev
+      ```
+
+   2. Configure preprocessors in `cypress/plugins/index.js`
 
    ```js
    module.exports = (on, config) => {

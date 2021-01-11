@@ -5,8 +5,7 @@
   "main": "out/dist.js",
   "dependencies": {
     "chokidar": "3.4.0",
-    "shadow-cljs": "2.10.18",
-    "@cypress/browserify-preprocessor": "3.0.1"
+    "shadow-cljs": "2.10.18"
   },
   "scripts": {
     "prepare": "shadow-cljs release app"

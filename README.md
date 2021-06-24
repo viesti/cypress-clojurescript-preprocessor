@@ -84,6 +84,7 @@ The Shadow CLJS configuration used by the preprocessor may be overridden via a `
 
 ## Changelog
 
+* 0.1.5 Merge override config ontop final config, allows to add additional :source-paths
 * 0.1.4 Bundle browserify preprocessor
 * 0.1.3 Add shadow-cljs-override.edn
 * 0.1.2 Bundle Bundle mocha-latte and chai-latte

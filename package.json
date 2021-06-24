@@ -1,6 +1,6 @@
 {
   "name": "cypress-clojurescript-preprocessor",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "ClojureScript preprocessor for Cypress using shadow-cljs",
   "main": "out/dist.js",
   "dependencies": {

@@ -96,10 +96,10 @@
                                         test-files)
         config-path             (str working-directory "/" "shadow-cljs.edn")
         config                  (-> default-config
-                                    (m/meta-merge (when (.existsSync fs override-config-path)
-                                                    (read-edn override-config-path)))
                                     (assoc :source-paths [integration-folder])
-                                    (assoc :builds builds))
+                                    (assoc :builds builds)
+                                    (m/meta-merge (when (.existsSync fs override-config-path)
+                                                    (read-edn override-config-path))))
         default-preprocessor    (browserify-preprocessor)]
     (when-not (.existsSync fs working-directory)
       (.mkdirSync fs working-directory))

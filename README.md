@@ -96,6 +96,7 @@ The preprocessor is written in ClojureScript and compiled to a npm library with 
 
 ## Changelog
 
+* 0.1.6 Support namespaces with multiple segments (thanks @martinklepsch !), also files with underscore. Bump chokidar to 3.5.2
 * 0.1.5 Merge override config ontop final config, allows to add additional :source-paths
 * 0.1.4 Bundle browserify preprocessor
 * 0.1.3 Add shadow-cljs-override.edn

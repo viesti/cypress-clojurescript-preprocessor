@@ -56,8 +56,9 @@
 
 (defn namespace-symbol [test-file]
   (-> test-file
-      (.replace ".cljs" "")
-      (.replace "/" ".")
+      (str/replace #"\.cljs$" "")
+      (str/replace "/" ".")
+      (str/replace "_" "-")
       symbol))
 
 (defn write-edn [path content]

@@ -82,6 +82,18 @@ The shadow-cljs server is kept running while the Cypress runner is active. When 
 
 The Shadow CLJS configuration used by the preprocessor may be overridden via a `shadow-cljs-override.edn` file, which is merged on top of the default configuration with [meta-merge](https://github.com/weavejester/meta-merge). By default, `[mocha-latte "0.1.2"]` and `[chai-latte "0.2.0"]` are included in the shadow-cljs.edn configuration used by the preprocessor.
 
+## Development
+
+Here's some notes on how to develop this library.
+
+### Shadow-cljs repl
+
+The preprocessor is written in ClojureScript and compiled to a npm library with the help of shadow-cljs. To develop the library in a ClojureScript repl:
+
+1. Start node repl via `shadow-cljs node-repl`
+2. Connect to the `nrepl` server for example from Emacs with cider: `cider-connect`
+3. In `nrepl` at the `shadow.user>` prompt, switch to the node repl via: ` (shadow/repl :node-repl)`
+
 ## Changelog
 
 * 0.1.5 Merge override config ontop final config, allows to add additional :source-paths

@@ -1,7 +1,10 @@
-{:source-paths ["src"]
+{:source-paths ["src" "test"]
  :dependencies [[io.nervous/cljs-nodejs-externs "0.2.0"]
                 [meta-merge "1.0.0"]]
  :builds {:app {:target :node-library
                 :output-to "out/dist.js"
                 :exports-var net.tiuhti.cypress-cljs/make-cljs-preprocessor
-                :compiler-options {:infer-externs :auto}}}}
+                :compiler-options {:infer-externs :auto}}
+          :test {:target :node-test
+                 :output-to "target/test/test.js"
+                 :autorun true}}}

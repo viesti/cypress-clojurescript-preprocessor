@@ -9,7 +9,8 @@
     "@cypress/browserify-preprocessor": "3.0.1"
   },
   "scripts": {
-    "prepare": "shadow-cljs release app"
+    "prepare": "shadow-cljs release app",
+    "test": "shadow-cljs compile test"
   },
   "keywords": [
     "cypress",

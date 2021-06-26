@@ -82,6 +82,34 @@ The shadow-cljs server is kept running while the Cypress runner is active. When 
 
 The Shadow CLJS configuration used by the preprocessor may be overridden via a `shadow-cljs-override.edn` file, which is merged on top of the default configuration with [meta-merge](https://github.com/weavejester/meta-merge). By default, `[mocha-latte "0.1.2"]` and `[chai-latte "0.2.0"]` are included in the shadow-cljs.edn configuration used by the preprocessor.
 
+### Shared namespaces
+
+The working directory of the shadow-cljs compiler that is driven by the preprocessor is the `cypress` folder. Because of this, in order to include shared code that is in a folder at the same level as the `cypress` directory, use a relative (or absolute path) e.g.
+
+```
+$ tree -I "node_modules" -P common.cljs\|window.cljs
+.
+├── cypress
+│   ├── fixtures
+│   ├── integration
+│   │   └── examples
+│   │       └── window.cljs
+│   ├── plugins
+│   └── support
+└── src ;; shared code directory
+    └── net
+        └── tiuhti
+            └── common.cljs
+$ cat shadow-cljs-override.edn
+{:source-paths ["../src"]} ;; path relative to `cypress` directory
+$ head -3 cypress/integration/examples/window.cljs
+(ns examples.window
+  (:require-macros [latte.core :refer [describe beforeEach it]])
+  (:require [net.tiuhti.common :as common]))  ;; require namespace in the `src` directory
+```
+
+Dependencies used by the shared code would have to be specified in the `:dependencies` key in `shadow-cljs-override.edn` file.
+
 ## Development
 
 Here's some notes on how to develop this library.

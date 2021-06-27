@@ -154,6 +154,12 @@ $ ./node_modules/.bin/cypress open
 
 ## Changelog
 
+* 0.1.7 
+  * Bump shadow-cljs to 2.14.5
+  * Call process/exit to not leave zombies when Cypress exits
+  * When adding a new test while the preprocessor is running
+    * Use same optimization level as for initial build config
+    * Prevent duplicate merge of `shadow-cljs-override.edn`
 * 0.1.6 Support namespaces with multiple segments (thanks @martinklepsch !), also files with underscore. Bump chokidar to 3.5.2
 * 0.1.5 Merge override config ontop final config, allows to add additional :source-paths
 * 0.1.4 Bundle browserify preprocessor

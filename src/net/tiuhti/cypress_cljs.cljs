@@ -151,7 +151,7 @@
                   test-file     (relative-to-integration filePath)
                   config        (read-edn config-path)]
               (when-not (contains? (:builds config) build-id)
-                (println "Updating shadow-cljs.edn")
+                (println (str "Adding build " build-id " to shadow-cljs configuration"))
                 (let [output-dir (str "out/" test-name)
                       config     (update config :builds conj [build-id {:target           :browser
                                                                         :compiler-options {:optimizations :simple}

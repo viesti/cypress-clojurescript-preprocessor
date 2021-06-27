@@ -69,8 +69,8 @@
 
 (def watchers (atom {}))
 
-(defn make-cljs-preprocessor [config]
-  (let [integration-folder      (.-integrationFolder ^js config)
+(defn make-cljs-preprocessor [preprocessor-config]
+  (let [integration-folder      (.-integrationFolder ^js preprocessor-config)
         relative-to-integration (fn [path]
                                   (.replace path (str integration-folder "/") ""))
         test-files              (->> (tree-seq :directory? read-dir (stat integration-folder))

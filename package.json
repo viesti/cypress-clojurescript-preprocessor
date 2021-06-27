@@ -10,7 +10,8 @@
   },
   "scripts": {
     "prepare": "shadow-cljs release app",
-    "test": "shadow-cljs compile test"
+    "test": "shadow-cljs compile test",
+    "compile": "shadow-cljs compile app"
   },
   "keywords": [
     "cypress",

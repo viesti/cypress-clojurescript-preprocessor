@@ -149,9 +149,7 @@
                                            ".js"])
                   build-id      (keyword test-name)
                   test-file     (relative-to-integration filePath)
-                  config        (-> (read-edn config-path)
-                                    (m/meta-merge (when (.existsSync fs override-config-path)
-                                                    (read-edn override-config-path))))]
+                  config        (read-edn config-path)]
               (when-not (contains? (:builds config) build-id)
                 (println "Updating shadow-cljs.edn")
                 (let [output-dir (str "out/" test-name)

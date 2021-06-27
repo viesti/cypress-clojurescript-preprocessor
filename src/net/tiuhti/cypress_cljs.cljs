@@ -154,7 +154,6 @@
                 (println (str "Adding build " build-id " to shadow-cljs configuration"))
                 (let [output-dir (str "out/" test-name)
                       config     (update config :builds conj [build-id {:target           :browser
-                                                                        :compiler-options {:optimizations :simple}
                                                                         :output-dir       output-dir
                                                                         :asset-path       (str "/" output-dir)
                                                                         :modules          {build-id {:entries [(namespace-symbol test-file)]}}}])]

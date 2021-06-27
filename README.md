@@ -122,6 +122,36 @@ The preprocessor is written in ClojureScript and compiled to a npm library with 
 2. Connect to the `nrepl` server for example from Emacs with cider: `cider-connect`
 3. In `nrepl` at the `shadow.user>` prompt, switch to the node repl via: ` (shadow/repl :node-repl)`
 
+### Use locally compiled version
+
+To use a local version of the preprocessor, point the client project to the local clone of the preprocessor:
+
+```0% cat package.json
+{
+  "devDependencies": {
+    "cypress": "^7.6.0",
+    "shadow-cljs": "^2.14.5"      ;; <-- Also, need to have shadow-cljs installed in the client project
+  },
+  "dependencies": {
+    "cypress-clojurescript-preprocessor": "../cypress-clojurescript-preprocessor"  ;;  <-- Directory of the local copy
+  }
+}
+```
+
+Note the the client project also needs shadow-cljs to be installed (apparently :)).
+
+Then, compile your changes via
+
+```
+$ npm run prepare
+```
+
+And (re)start Cypress in the client project:
+
+```
+$ ./node_modules/.bin/cypress open
+```
+
 ## Changelog
 
 * 0.1.6 Support namespaces with multiple segments (thanks @martinklepsch !), also files with underscore. Bump chokidar to 3.5.2

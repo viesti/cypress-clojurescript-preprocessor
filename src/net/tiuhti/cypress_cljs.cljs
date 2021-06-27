@@ -122,7 +122,9 @@
                              (println "Stopping shadow-cljs server")
                              (let [output (cp/spawnSync shadow-cljs-bin-path #js ["stop"] #js {:cwd working-directory})]
                                (println "stdout:" (.trimEnd (buffer->str (.-stdout output))))
-                               (println "stderr:" (.trimEnd (buffer->str (.-stderr output)))))))]
+                               (println "stderr:" (.trimEnd (buffer->str (.-stderr output)))))
+                             (println "Stopped shadow-cljs server")
+                             (process/exit 0)))]
       ;; TODO: Option for compiling all tests at start
       #_(add-watch ready :compile (fn [_]
                                   (compile (map name (keys builds)))))

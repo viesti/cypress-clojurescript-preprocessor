@@ -16,6 +16,8 @@
 
 (def shadow-cljs-bin-path "../node_modules/.bin/shadow-cljs")
 
+(def config-path (str working-directory "/" "shadow-cljs.edn"))
+
 (def default-config
   {:dependencies [['mocha-latte "0.1.2"]
                   ['chai-latte "0.2.0"]]
@@ -67,6 +69,32 @@
 (defn read-edn [path]
   (edn/read-string (buffer->str (.readFileSync fs path))))
 
+(defn make-shadow-cljs-config [test-files integration-folder]
+  (let [builds (reduce (fn [acc test-file]
+                         (let [paths      (-> test-file
+                                              (.split "/"))
+                               test-name  (-> paths
+                                              last
+                                              (.split ".")
+                                              first)
+                               output-dir (str "out/" test-name)
+                               entry      (namespace-symbol test-file)
+                               build-id   (keyword test-name)]
+                           (assoc acc
+                                  build-id
+                                  {:target     :browser
+                                   :output-dir output-dir
+                                   :asset-path (str "/" output-dir)
+                                   :modules    {build-id {:entries [entry]}}})))
+                       {}
+                       test-files)
+        config (-> default-config
+                   (assoc :source-paths [integration-folder])
+                   (assoc :builds builds)
+                   (m/meta-merge (when (.existsSync fs override-config-path)
+                                   (read-edn override-config-path))))]
+    config))
+
 (def watchers (atom {}))
 
 (defn make-cljs-preprocessor [preprocessor-config]
@@ -77,31 +105,8 @@
                                      (keep :path)
                                      (filter #(.endsWith % ".cljs"))
                                      (map relative-to-integration))
-        builds                  (reduce (fn [acc test-file]
-                                          (let [paths      (-> test-file
-                                                               (.split "/"))
-                                                test-name  (-> paths
-                                                               last
-                                                               (.split ".")
-                                                               first)
-                                                output-dir (str "out/" test-name)
-                                                entry      (namespace-symbol test-file)
-                                                build-id   (keyword test-name)]
-                                            (assoc acc
-                                                   build-id
-                                                   {:target     :browser
-                                                    :output-dir output-dir
-                                                    :asset-path (str "/" output-dir)
-                                                    :modules    {build-id {:entries [entry]}}})))
-                                        {}
-                                        test-files)
-        config-path             (str working-directory "/" "shadow-cljs.edn")
-        config                  (-> default-config
-                                    (assoc :source-paths [integration-folder])
-                                    (assoc :builds builds)
-                                    (m/meta-merge (when (.existsSync fs override-config-path)
-                                                    (read-edn override-config-path))))
-        default-preprocessor    (browserify-preprocessor)]
+        default-preprocessor    (browserify-preprocessor)
+        config                  (make-shadow-cljs-config test-files integration-folder)]
     (when-not (.existsSync fs working-directory)
       (.mkdirSync fs working-directory))
     (write-edn config-path config)

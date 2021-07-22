@@ -1,19 +1,19 @@
 (ns net.tiuhti.cypress-cljs
   (:require ["child_process" :as cp]
             ["fs" :as fs]
-            ["string_decoder" :as st]
             ["process" :as process]
             ["path" :as path]
             ["chokidar" :as chokidar]
             ["events" :as EventEmitter]
             [clojure.edn :as edn]
             [clojure.string :as str]
-            [cljs.pprint :refer [pprint]]
             [meta-merge.core :as m]
             ["net" :as node-net]
-            ["@cypress/browserify-preprocessor" :as browserify-preprocessor]))
+            ["@cypress/browserify-preprocessor" :as browserify-preprocessor]
+            [net.tiuhti.utils :as utils]))
 
 (def build-hook
+  "Shadow-cljs build hook, which listens for build flush events and puts them into a queue, which can then be polled by the preprocessor, to trigger Cypress to run tests."
   "
 (ns watch
   (:import (java.util.concurrent LinkedBlockingQueue)))
@@ -38,33 +38,12 @@
 (def cli-repl-port-path (str working-directory "/" ".shadow-cljs/cli-repl.port"))
 
 (def default-config
+  "Default shadow-cljs condfiguration, includes mocha-latte and chai-latte dependencies."
   {:dependencies [['mocha-latte "0.1.2"]
                   ['chai-latte "0.2.0"]]
    :builds       {}})
 
 (def override-config-path "shadow-cljs-override.edn")
-
-(defn stat [dir]
-  (let [stat (.statSync fs dir)]
-    {:file-name dir
-     :directory? (.isDirectory stat)}))
-
-(defn read-dir [dir]
-  (let [parent (if (string? dir)
-                 (stat dir)
-                 dir)]
-    (map (fn [dirent]
-           {:file-name (.-name dirent)
-            :directory? (.isDirectory dirent)
-            :path (str (or (:path parent) (:file-name parent)) "/" (.-name dirent))})
-         (.readdirSync fs
-                       (or (:path parent) (:file-name parent))
-                       (clj->js {:withFileTypes true})))))
-
-(def decoder (st/StringDecoder. "utf8"))
-
-(defn buffer->str [buf]
-  (.write decoder buf))
 
 (defn compile [build-ids]
   (let [process (cp/spawn shadow-cljs-bin-path
@@ -72,7 +51,7 @@
                           #js {:cwd working-directory})]
     (-> ^EventEmitter (.-stdout process)
         (.on "data" (fn [data]
-                      (println (str "Compile: " (.trimEnd (buffer->str data)))))))
+                      (println (str "Compile: " (.trimEnd (utils/buffer->str data)))))))
     process))
 
 (defn namespace-symbol [test-file]
@@ -81,12 +60,6 @@
       (str/replace "/" ".")
       (str/replace "_" "-")
       symbol))
-
-(defn write-edn [path content]
-  (.writeFileSync fs path (with-out-str (pprint content))))
-
-(defn read-edn [path]
-  (edn/read-string (buffer->str (.readFileSync fs path))))
 
 (defn make-shadow-cljs-config [test-files integration-folder]
   (let [builds (reduce (fn [acc test-file]
@@ -112,16 +85,28 @@
                    (assoc :source-paths ["." integration-folder])
                    (assoc :builds builds)
                    (m/meta-merge (when (.existsSync fs override-config-path)
-                                   (read-edn override-config-path))))]
+                                   (utils/read-edn override-config-path))))]
     config))
 
 (def watchers (atom {}))
+
+(def flush-queue-consumer
+  ""
+  "(require '[watch :as watch])
+
+(future
+  (try
+    (loop []
+      (println {:event-id :flush :data (.take watch/flush-queue)})
+      (recur))
+  (catch Throwable t
+    (println {:event-id :error :data :flush-queue-read}))))\n")
 
 (defn make-cljs-preprocessor [preprocessor-config]
   (let [integration-folder      (.-integrationFolder ^js preprocessor-config)
         relative-to-integration (fn [path]
                                   (.replace path (str integration-folder "/") ""))
-        test-files              (->> (tree-seq :directory? read-dir (stat integration-folder))
+        test-files              (->> (tree-seq :directory? utils/read-dir (utils/stat integration-folder))
                                      (keep :path)
                                      (remove #(.startsWith % "#")) ;; Ignore Emacs temp files
                                      (filter #(.endsWith % ".cljs"))
@@ -130,44 +115,44 @@
         config                  (make-shadow-cljs-config test-files integration-folder)]
     (when-not (.existsSync fs working-directory)
       (.mkdirSync fs working-directory))
-    (write-edn config-path config)
+    (utils/write-edn config-path config)
     (.writeFileSync fs hook-path build-hook)
     (println "Starting shadow-cljs server")
     (let [shadow-process    (cp/spawn shadow-cljs-bin-path #js ["server"] #js {:cwd working-directory})
           ready             (atom false)
           socket            (atom nil)
           output-fn         (fn [data]
-                              (let [s (buffer->str data)]
-                             (when (.includes s "server version")
-                               (reset! ready true))
-                             (println (.trimEnd s))))
+                              (let [s (utils/buffer->str data)]
+                                (when (.includes s "server version")
+                                  (reset! ready true))
+                                (println (.trimEnd s))))
           stopping          (atom false)
           build-poller      (atom nil)
           stop-fn           (fn []
-                           (when @stopping
-                             (println "Stop in progress"))
-                           (js/clearInterval @build-poller)
-                           (.destroy ^node-net/Socket @socket)
-                           (when-not @stopping
-                             (reset! stopping true)
-                             (println "Stopping shadow-cljs server")
-                             (let [output (cp/spawnSync shadow-cljs-bin-path #js ["stop"] #js {:cwd working-directory})]
-                               (println "stdout:" (.trimEnd (buffer->str (.-stdout output))))
-                               (println "stderr:" (.trimEnd (buffer->str (.-stderr output)))))
-                             (println "Stopped shadow-cljs server")
-                             (process/exit 0)))
+                              (when @stopping
+                                (println "Stop in progress"))
+                              (js/clearInterval @build-poller)
+                              (.destroy ^node-net/Socket @socket)
+                              (when-not @stopping
+                                (reset! stopping true)
+                                (println "Stopping shadow-cljs server")
+                                (let [output (cp/spawnSync shadow-cljs-bin-path #js ["stop"] #js {:cwd working-directory})]
+                                  (println "stdout:" (.trimEnd (utils/buffer->str (.-stdout output))))
+                                  (println "stderr:" (.trimEnd (utils/buffer->str (.-stderr output)))))
+                                (println "Stopped shadow-cljs server")
+                                (process/exit 0)))
           active-builds     (atom #{})
           build-id->resolve (atom {})
           build-id->rerun   (atom {})
           build-id->file    (atom {})
           deliver-now       (atom false)]
       (add-watch ready :socket (fn []
-                                 (let [s (node-net/connect #js {:port    (js/parseInt (buffer->str (.readFileSync fs cli-repl-port-path)))
+                                 (let [s (node-net/connect #js {:port    (js/parseInt (utils/buffer->str (.readFileSync fs cli-repl-port-path)))
                                                                 :host    "localhost"
                                                                 :timeout 1000})]
                                    (.on s "end" #(println "Control socket closed"))
                                    (.on s "data" (fn [data]
-                                                   (let [string (buffer->str data)]
+                                                   (let [string (utils/buffer->str data)]
                                                      (try
                                                        (let [{:keys [event-id data] :as event} (edn/read-string string)]
                                                          (case event-id
@@ -192,7 +177,7 @@
                                                            (println "Unknown event" event)))
                                                        (catch :default _
                                                          (println "Failed to parse control message:" string))))))
-                                   (.write s "(require '[watch :as watch])\n (future (try (loop [] (println {:event-id :flush :data (.take watch/flush-queue)}) (recur)) (catch Throwable t (println {:event-id :error :data :flush-queue-read}))))\n")
+                                   (.write s flush-queue-consumer)
                                    (reset! build-poller (js/setInterval #(.write s "(println {:event-id :active-builds :data (shadow/active-builds)})\n")
                                                                         1000))
                                    (reset! socket s))))
@@ -205,6 +190,7 @@
           (.on "data" output-fn))
       (.on process "SIGINT" stop-fn)
       (.on process "SIGTERM" stop-fn)
+      ;; Return the callback function that processes the given file
       (fn preprocessor [file]
         (let [filePath (.-filePath ^js file)]
           (if-not (.endsWith filePath ".cljs")
@@ -220,7 +206,7 @@
                                            ".js"])
                   build-id      (keyword test-name)
                   test-file     (relative-to-integration filePath)
-                  config        (read-edn config-path)]
+                  config        (utils/read-edn config-path)]
               (swap! build-id->file assoc build-id file)
               (when-not (contains? (:builds config) build-id)
                 (println (str "Adding build " build-id " to shadow-cljs configuration"))
@@ -230,7 +216,7 @@
                                                                         :asset-path  (str "/" output-dir)
                                                                         :modules     {build-id {:entries [(namespace-symbol test-file)]}}
                                                                         :build-hooks ['(watch/hook)]}])]
-                  (write-edn config-path config)))
+                  (utils/write-edn config-path config)))
               (when (and (.-shouldWatch ^js file)
                          (not (contains? @watchers filePath)))
                 (println "Add watcher for" filePath)

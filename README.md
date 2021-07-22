@@ -19,13 +19,13 @@ The shadow-cljs server is kept running while the Cypress runner is active. When 
 2. Install [Cypress](https://docs.cypress.io/guides/getting-started/installing-cypress.html#Installing)
 
    ```sh
-   $ npm install cypress --save-dev
+   npm install cypress --save-dev
    ```
 
 3. Install cypress-clojurescript-preprocessor
 
    ```sh
-   $ npm install cypress-clojurescript-preprocessor
+   npm install cypress-clojurescript-preprocessor
    ```
 
 4. Configure ClojureScript preprocessor
@@ -73,7 +73,7 @@ The shadow-cljs server is kept running while the Cypress runner is active. When 
 6. Run test
 
    ```sh
-   $ ./node_modules/.bin/cypress open
+   ./node_modules/.bin/cypress open
    ```
 
 ## REPL in Cypress

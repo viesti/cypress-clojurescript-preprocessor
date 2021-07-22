@@ -198,7 +198,9 @@ $ ./node_modules/.bin/cypress open
 
 ## Changelog
 
-* 0.1.7 
+* NEXT
+  * Support REPL
+* 0.1.7
   * Bump shadow-cljs to 2.14.5
   * Call process/exit to not leave zombies when Cypress exits
   * When adding a new test while the preprocessor is running

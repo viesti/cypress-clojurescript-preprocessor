@@ -118,29 +118,27 @@
     (utils/write-edn config-path config)
     (.writeFileSync fs hook-path build-hook)
     (println "Starting shadow-cljs server")
-    (let [shadow-process    (cp/spawn shadow-cljs-bin-path #js ["server"] #js {:cwd working-directory})
-          ready             (atom false)
-          socket            (atom nil)
+    (let [ready             (atom false)
           output-fn         (fn [data]
                               (let [s (utils/buffer->str data)]
                                 (when (.includes s "server version")
                                   (reset! ready true))
                                 (println (.trimEnd s))))
-          stopping          (atom false)
+          shadow-process    (cp/spawn shadow-cljs-bin-path #js ["server"] #js {:cwd working-directory
+                                                                               ;; Start as detached to allow killing
+                                                                               :detached true})
+          socket            (atom nil)
           build-poller      (atom nil)
           stop-fn           (fn []
-                              (when @stopping
-                                (println "Stop in progress"))
                               (js/clearInterval @build-poller)
-                              (.destroy ^node-net/Socket @socket)
-                              (when-not @stopping
-                                (reset! stopping true)
-                                (println "Stopping shadow-cljs server")
-                                (let [output (cp/spawnSync shadow-cljs-bin-path #js ["stop"] #js {:cwd working-directory})]
-                                  (println "stdout:" (.trimEnd (utils/buffer->str (.-stdout output))))
-                                  (println "stderr:" (.trimEnd (utils/buffer->str (.-stderr output)))))
+                              (println "Stopping shadow-cljs server")
+                              (try
+                                (.write @socket "(shadow.cljs.devtools.server/remote-stop!)\n:repl/quit\n")
+                                ;; Kill whole process group, see: https://azimi.me/2014/12/31/kill-child_process-node-js.html
+                                (js/process.kill (- (.-pid shadow-process)))
                                 (println "Stopped shadow-cljs server")
-                                (process/exit 0)))
+                                (catch :default e
+                                  (println "Failed to stop shadow-cljs server" e))))
           active-builds     (atom #{})
           build-id->resolve (atom {})
           build-id->rerun   (atom {})
@@ -150,7 +148,8 @@
                                  (let [s (node-net/connect #js {:port    (js/parseInt (utils/buffer->str (.readFileSync fs cli-repl-port-path)))
                                                                 :host    "localhost"
                                                                 :timeout 1000})]
-                                   (.on s "end" #(println "Control socket closed"))
+                                   (.on s "end" (fn [] (println "Control socket closed")))
+                                   (.on s "close" (fn [_] (println "Control socket closed")))
                                    (.on s "data" (fn [data]
                                                    (let [string (utils/buffer->str data)]
                                                      (try
@@ -183,13 +182,15 @@
                                    (reset! socket s))))
       ;; TODO: Option for compiling all tests at start
       #_(add-watch ready :compile (fn [_]
-                                  (compile (map name (keys builds)))))
+                                    (compile (map name (keys builds)))))
+      ;; TODO stdout is not immediately available, switch to what shadow cli does (poll for pid and port file existence, when found, then set ready flag and add stdout/stderr listeners): https://github.com/thheller/shadow-cljs/blob/bf5f474fab0da5b9fa61731484ec7c1c978f52bc/src/main/shadow/cljs/npm/cli.cljs#L849-L851
       (-> ^EventEmitter (.-stdout shadow-process)
           (.on "data" output-fn))
       (-> ^EventEmitter (.-stderr shadow-process)
           (.on "data" output-fn))
-      (.on process "SIGINT" stop-fn)
-      (.on process "SIGTERM" stop-fn)
+      (let [onExit (js/require "signal-exit")]
+        (onExit (fn [_code _signal]
+                  (stop-fn))))
       ;; Return the callback function that processes the given file
       (fn preprocessor [file]
         (let [filePath (.-filePath ^js file)]

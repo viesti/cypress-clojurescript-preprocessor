@@ -223,8 +223,10 @@ $ ./node_modules/.bin/cypress open
 
 ## Changelog
 
-* NEXT
-  * Support REPL
+* 0.2.0
+  * Support REPL in an open test, allows to use the "now" command
+  * Finally fix zombie processes after exit, by using [signal-exit](https://azimi.me/2014/12/31/kill-child_process-node-js.html), thanks to [this blog post](https://azimi.me/2014/12/31/kill-child_process-node-js.html)
+  * Detech shadow-cljs startup by polling port/pid files and remove race condition around subprocess stdout/stderr
 * 0.1.7
   * Bump shadow-cljs to 2.14.5
   * Call process/exit to not leave zombies when Cypress exits

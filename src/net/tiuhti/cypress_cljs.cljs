@@ -104,7 +104,6 @@
     (println {:event-id :error :data :flush-queue-read}))))\n")
 
 (defn make-cljs-preprocessor [preprocessor-config]
-  (println [nil js/process.stdout js/process.stderr])
   (let [integration-folder      (.-integrationFolder ^js preprocessor-config)
         relative-to-integration (fn [path]
                                   (.replace path (str integration-folder "/") ""))

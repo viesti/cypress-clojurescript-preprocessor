@@ -36,6 +36,8 @@
 
 (def cli-repl-port-path (str working-directory "/" ".shadow-cljs/cli-repl.port"))
 
+(def server-pid-path (str working-directory "/" ".shadow-cljs/server.pid"))
+
 (def default-config
   "Default shadow-cljs condfiguration, includes mocha-latte and chai-latte dependencies."
   {:dependencies [['mocha-latte "0.1.2"]
@@ -102,6 +104,7 @@
     (println {:event-id :error :data :flush-queue-read}))))\n")
 
 (defn make-cljs-preprocessor [preprocessor-config]
+  (println [nil js/process.stdout js/process.stderr])
   (let [integration-folder      (.-integrationFolder ^js preprocessor-config)
         relative-to-integration (fn [path]
                                   (.replace path (str integration-folder "/") ""))
@@ -118,14 +121,10 @@
     (.writeFileSync fs hook-path build-hook)
     (println "Starting shadow-cljs server")
     (let [ready             (atom false)
-          output-fn         (fn [data]
-                              (let [s (utils/buffer->str data)]
-                                (when (.includes s "server version")
-                                  (reset! ready true))
-                                (println (.trimEnd s))))
           shadow-process    (cp/spawn shadow-cljs-bin-path #js ["server"] #js {:cwd working-directory
                                                                                ;; Start as detached to allow killing
-                                                                               :detached true})
+                                                                               :detached true
+                                                                               :stdio #js [nil js/process.stdout js/process.stderr]})
           socket            (atom nil)
           build-poller      (atom nil)
           stop-fn           (fn []
@@ -142,7 +141,12 @@
           build-id->resolve (atom {})
           build-id->rerun   (atom {})
           build-id->file    (atom {})
-          deliver-now       (atom false)]
+          deliver-now       (atom false)
+          ready-check       (fn ready-check []
+                              (if (and (fs/existsSync cli-repl-port-path)
+                                       (fs/existsSync server-pid-path))
+                                (reset! ready true)
+                                (js/setTimeout ready-check 500)))]
       (add-watch ready :socket (fn []
                                  (let [s (node-net/connect #js {:port    (js/parseInt (utils/buffer->str (.readFileSync fs cli-repl-port-path)))
                                                                 :host    "localhost"
@@ -179,14 +183,10 @@
                                    (reset! build-poller (js/setInterval #(.write s "(println {:event-id :active-builds :data (shadow/active-builds)})\n")
                                                                         1000))
                                    (reset! socket s))))
+      (js/setTimeout ready-check 500)
       ;; TODO: Option for compiling all tests at start
       #_(add-watch ready :compile (fn [_]
                                     (compile (map name (keys builds)))))
-      ;; TODO stdout is not immediately available, switch to what shadow cli does (poll for pid and port file existence, when found, then set ready flag and add stdout/stderr listeners): https://github.com/thheller/shadow-cljs/blob/bf5f474fab0da5b9fa61731484ec7c1c978f52bc/src/main/shadow/cljs/npm/cli.cljs#L849-L851
-      (-> ^EventEmitter (.-stdout shadow-process)
-          (.on "data" output-fn))
-      (-> ^EventEmitter (.-stderr shadow-process)
-          (.on "data" output-fn))
       (let [onExit (js/require "signal-exit")]
         (onExit (fn [_code _signal]
                   (stop-fn))))

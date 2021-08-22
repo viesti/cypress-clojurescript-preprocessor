@@ -19,13 +19,13 @@ The shadow-cljs server is kept running while the Cypress runner is active. When 
 2. Install [Cypress](https://docs.cypress.io/guides/getting-started/installing-cypress.html#Installing)
 
    ```sh
-   $ npm install cypress --save-dev
+   npm install cypress --save-dev
    ```
 
 3. Install cypress-clojurescript-preprocessor
 
    ```sh
-   $ npm install cypress-clojurescript-preprocessor
+   npm install cypress-clojurescript-preprocessor
    ```
 
 4. Configure ClojureScript preprocessor
@@ -73,8 +73,52 @@ The shadow-cljs server is kept running while the Cypress runner is active. When 
 6. Run test
 
    ```sh
-   $ ./node_modules/.bin/cypress open
+   ./node_modules/.bin/cypress open
    ```
+
+## REPL in Cypress
+
+You can active REPL into a test in the browser that Cypress is controlling.
+
+1. Lookup NREPL port used by the shadow-cljs server
+
+   ```
+   $ cat .preprocessor-cljs/.shadow-cljs/nrepl.port
+   50796
+   ```
+
+2. Connect to the NREPL server and start shadow-cljs watch
+
+   ```
+   shadow.user> (shadow/watch :window)
+   ```
+
+   The build-id is a keyword of the test file name
+
+3. Start a ClojureScript repl
+
+   ```
+   shadow.user> (shadow/repl :window)
+   To quit, type: :cljs/quit
+   [:selected :window]
+   cljs.user> (js/alert "plop") ;; To try out that it works
+   ```
+
+Now you can use the slightly undocumented `now` command to execute Cypress command immediately, for example, to select an option:
+
+```
+cljs.user> (-> (.now js/cy "get" "#some-opt")
+               (.then (fn [el]
+                        (.now js/cy "select" el "two"))))
+#object[Promise [object Promise]]
+```
+
+Some references to the `now` command:
+
+* https://github.com/cypress-io/cypress/issues/6080#issuecomment-570481923
+* https://docs.cypress.io/guides/guides/debugging#Run-Cypress-command-outside-the-test
+* https://github.com/cypress-io/cypress/issues/8195
+* https://github.com/cypress-io/cypress/issues/3636#issuecomment-511315778
 
 ## Configuration
 
@@ -154,7 +198,9 @@ $ ./node_modules/.bin/cypress open
 
 ## Changelog
 
-* 0.1.7 
+* NEXT
+  * Support REPL
+* 0.1.7
   * Bump shadow-cljs to 2.14.5
   * Call process/exit to not leave zombies when Cypress exits
   * When adding a new test while the preprocessor is running

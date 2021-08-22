@@ -87,15 +87,28 @@ You can active REPL into a test in the browser that Cypress is controlling.
    50796
    ```
 
-2. Connect to the NREPL server and start shadow-cljs watch
+2. Connect to the NREPL server and list builds
+
+   ```
+   shadow.user> (shadow/get-build-ids)
+   (:npm :local :window_foo :window)
+   ```
+
+3. Open a test in the Cypress runner
+
+4. Start shadow-cljs watch on the test that is open in the Cypress runner
 
    ```
    shadow.user> (shadow/watch :window)
+   [:window] Configuring build.
+   [:window] Compiling ...
+   [:window] Build completed. (119 files, 0 compiled, 0 warnings, 1.22s)
+   :watching
    ```
 
    The build-id is a keyword of the test file name
 
-3. Start a ClojureScript repl
+5. Start a ClojureScript repl
 
    ```
    shadow.user> (shadow/repl :window)
@@ -112,6 +125,18 @@ cljs.user> (-> (.now js/cy "get" "#some-opt")
                         (.now js/cy "select" el "two"))))
 #object[Promise [object Promise]]
 ```
+
+6. When done, exit the repl and stop shadow-cljs watch for the repl build
+
+   ```
+   cljs.user> :cljs/quit
+   Exited CLJS session. You are now in CLJ again.
+   :cljs/quit
+   shadow.user> 
+   (shadow/stop-worker :window)
+   Worker shutdown.
+   :stopped
+   ```
 
 Some references to the `now` command:
 

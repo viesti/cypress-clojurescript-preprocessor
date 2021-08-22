@@ -1,7 +1,6 @@
 (ns net.tiuhti.cypress-cljs
   (:require ["child_process" :as cp]
             ["fs" :as fs]
-            ["process" :as process]
             ["path" :as path]
             ["chokidar" :as chokidar]
             ["events" :as EventEmitter]

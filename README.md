@@ -6,6 +6,12 @@ The plugin works by inspecting the Cypress `integrationFolder` (by default, `cyp
 
 The shadow-cljs server is kept running while the Cypress runner is active. When a test is run, the test file is watched for changes and a recompile is done if the test file is changed and Cypress is notified to rerun the test. The first compile is a bit slow, but subsequent compiles are fast (the plugin uses shadow-cljs `compile` command, which defaults to [`optimizations: none`](https://shadow-cljs.github.io/docs/UsersGuide.html#Optimization)).
 
+## Rationale: Should you use this?
+
+I think a small word of warning should be in order if you intend to use this plugin :) I had a great time hacking this together over a period of time, but maxed out at getting a REPL flow working, which I think makes the current implementation quite complex, since Cypress isn't quite REPL friendly (check out [the issue on REPL support](https://github.com/cypress-io/cypress/issues/19427)). Also, I haven't updated the plugin to work with latest Cypress versions, which has changed the preprocessor API, so I don't think the current latest versio of this preprocessor works with current latest Cypress.
+
+There's good reading on rationale in https://github.com/viesti/cypress-clojurescript-preprocessor/issues/12 and possible future directions in https://github.com/viesti/cypress-clojurescript-preprocessor/issues/16, so I suggesst checking them out. If you are still interested, continue reading :)
+
 ## Example usage
 
 1. Create a project
